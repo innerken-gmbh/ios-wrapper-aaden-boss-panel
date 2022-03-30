@@ -11,9 +11,6 @@ import WebKit
 
 class ViewController: UIViewController {
     
-    // MARK: Outlets
-    @IBOutlet weak var leftButton: UIBarButtonItem!
-    @IBOutlet weak var rightButton: UIBarButtonItem!
     @IBOutlet weak var webViewContainer: UIView!
     @IBOutlet weak var offlineView: UIView!
     @IBOutlet weak var offlineIcon: UIImageView!
@@ -38,27 +35,7 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    // UI Actions
-    // handle back press
-    @IBAction func onLeftButtonClick(_ sender: Any) {
-        if (webView.canGoBack) {
-            webView.goBack()
-            // fix a glitch, as the above seems to trigger observeValue -> WKWebView.isLoading
-            activityIndicatorView.isHidden = true
-            activityIndicator.stopAnimating()
-        } else {
-            // exit app
-            UIControl().sendAction(#selector(URLSessionTask.suspend), to: UIApplication.shared, for: nil)
-        }
-    }
-    // open menu in page, or fire alternate function on large screens
-    @IBAction func onRightButtonClick(_ sender: Any) {
-        if (changeMenuButtonOnWideScreens && isWideScreen()) {
-            webView.evaluateJavaScript(alternateRightButtonJavascript, completionHandler: nil)
-        } else {
-            webView.evaluateJavaScript(menuButtonJavascript, completionHandler: nil)
-        }
-    }
+ 
     // reload page from offline screen
     @IBAction func onOfflineButtonClick(_ sender: Any) {
         offlineView.isHidden = true
@@ -83,7 +60,6 @@ class ViewController: UIViewController {
         }
         if (keyPath == #keyPath(WKWebView.estimatedProgress)) {
             progressBar.progress = Float(webView.estimatedProgress)
-            rightButton.isEnabled = (webView.estimatedProgress == 1)
         }
     }
     
@@ -102,26 +78,7 @@ class ViewController: UIViewController {
         if #available(iOS 10.0, *) {
             webView.configuration.ignoresViewportScaleLimits = false
         }
-        // user agent
-        if #available(iOS 9.0, *) {
-            if (useCustomUserAgent) {
-                webView.customUserAgent = customUserAgent
-            }
-            if (useUserAgentPostfix) {
-                if (useCustomUserAgent) {
-                    webView.customUserAgent = customUserAgent + " " + userAgentPostfix
-                } else {
-                    tempView = WKWebView(frame: .zero)
-                    tempView.evaluateJavaScript("navigator.userAgent", completionHandler: { (result, error) in
-                        if let resultObject = result {
-                            self.webView.customUserAgent = (String(describing: resultObject) + " " + userAgentPostfix)
-                            self.tempView = nil
-                        }
-                    })
-                }
-            }
-            webView.configuration.applicationNameForUserAgent = ""
-        }
+       
         
         // bounces
         webView.scrollView.bounces = enableBounceWhenScrolling
@@ -161,17 +118,13 @@ class ViewController: UIViewController {
         if (useLightStatusBarStyle) {
             self.navigationController?.navigationBar.barStyle = UIBarStyle.black
         }
+        self.navigationController?.navigationBar.isHidden=true
         
-        // handle menu button changes
-        /// set default
-        rightButton.title = menuButtonTitle
-        /// update if necessary
-        updateRightButtonTitle(invert: false)
+     
         /// create callback for device rotation
         let deviceRotationCallback : (Notification) -> Void = { _ in
             // this fires BEFORE the UI is updated, so we check for the opposite orientation,
             // if it's not the initial setup
-            self.updateRightButtonTitle(invert: true)
         }
         /// listen for device rotation
         NotificationCenter.default.addObserver(forName: .UIDeviceOrientationDidChange, object: nil, queue: .main, using: deviceRotationCallback)
@@ -213,34 +166,6 @@ class ViewController: UIViewController {
         }
     }
     
-    // UI Helper method to update right button text according to available screen width
-    func updateRightButtonTitle(invert: Bool) {
-        if (changeMenuButtonOnWideScreens) {
-            // first, check if device is wide enough to
-            if (UIScreen.main.fixedCoordinateSpace.bounds.height < wideScreenMinWidth) {
-                // long side of the screen is not long enough, don't need to update
-                return
-            }
-            // second, check if both portrait and landscape would fit
-            if (UIScreen.main.fixedCoordinateSpace.bounds.height >= wideScreenMinWidth
-                && UIScreen.main.fixedCoordinateSpace.bounds.width >= wideScreenMinWidth) {
-                // both orientations are considered "wide"
-                rightButton.title = alternateRightButtonTitle
-                return
-            }
-            
-            // if we land here, check the current screen width.
-            // we need to flip it around in some cases though, as our callback is triggered before the UI is updated
-            let changeToAlternateTitle = invert
-                ? !isWideScreen()
-                : isWideScreen()
-            if (changeToAlternateTitle) {
-                rightButton.title = alternateRightButtonTitle
-            } else {
-                rightButton.title = menuButtonTitle
-            }
-        }
-    }
 }
 
 // WebView Event Listeners
@@ -260,9 +185,9 @@ extension ViewController: WKNavigationDelegate {
     // didFailProvisionalNavigation
     // == we are offline / page not available
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        // show offline screen
-        offlineView.isHidden = false
-        webViewContainer.isHidden = true
+//        // show offline screen
+//        offlineView.isHidden = false
+//        webViewContainer.isHidden = true
     }
 }
 
@@ -278,10 +203,10 @@ extension ViewController: WKUIDelegate {
     // restrict navigation to target host, open external links in 3rd party apps
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let requestUrl = navigationAction.request.url {
-            if let requestHost = requestUrl.host {
-                if (requestHost.range(of: allowedOrigin) != nil ) {
-                    decisionHandler(.allow)
-                } else {
+            if let scheme=requestUrl.scheme{
+                print(scheme)
+                if(scheme != "http"&&scheme != "https"){
+                    print("I should Open")
                     decisionHandler(.cancel)
                     if (UIApplication.shared.canOpenURL(requestUrl)) {
                         if #available(iOS 10.0, *) {
@@ -291,10 +216,15 @@ extension ViewController: WKUIDelegate {
                             UIApplication.shared.openURL(requestUrl)
                         }
                     }
+                }else{
+                    print("I should Allow")
+                    decisionHandler(.allow)
                 }
-            } else {
-                decisionHandler(.cancel)
+            }else{
+                decisionHandler(.allow)
             }
+        }else{
+            decisionHandler(.allow)
         }
     }
 }
