@@ -18,6 +18,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var activityIndicatorView: UIView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    
     // MARK: Globals
     var webView: WKWebView!
     var tempView: WKWebView!
@@ -57,10 +58,15 @@ class ViewController: UIViewController {
                 activityIndicator.startAnimating()
             }
             */
+            
+            print("loading...")
+            
         }
         if (keyPath == #keyPath(WKWebView.estimatedProgress)) {
             progressBar.progress = Float(webView.estimatedProgress)
         }
+        
+        print()
     }
     
     // Initialize WKWebView
@@ -166,6 +172,49 @@ class ViewController: UIViewController {
         }
     }
     
+    
+    // change Icon Button
+    @IBOutlet weak var toggleIconBtn: UIButton!
+    
+    @IBAction func triggerIcon(_ sender: Any) {
+        if(toggleIconBtn.backgroundColor != UIColor.green){
+            toggleIconBtn.backgroundColor = UIColor.green
+        } else {
+            toggleIconBtn.backgroundColor = UIColor.blue
+        }
+        print("---------------------------------------")
+        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
+
+        print("change icon")
+        
+        let str = UIApplication.shared.alternateIconName
+        print(str ?? "nil")
+        
+        
+        let name = "Icon_T4"
+        
+        
+        if (str != name) {
+            changeAppIconWithName(iconName: name)
+        } else {
+            changeAppIconWithName(iconName: nil)
+        }
+        
+        print("change icon complete")
+        
+        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
+        print("========================================")
+    }
+    
+    func changeAppIconWithName(iconName: String?) {
+        if UIApplication.shared.supportsAlternateIcons{
+            print("change to " + (iconName ?? "nil") )
+            UIApplication.shared.setAlternateIconName(iconName) { error in
+                print(error ?? "no error")
+            }
+        }
+    }
+    
 }
 
 // WebView Event Listeners
@@ -181,6 +230,7 @@ extension ViewController: WKNavigationDelegate {
         // hide activity indicator
         activityIndicatorView.isHidden = true
         activityIndicator.stopAnimating()
+        
     }
     // didFailProvisionalNavigation
     // == we are offline / page not available
