@@ -10,19 +10,19 @@ import UIKit
 import WebKit
 
 class ViewController: UIViewController {
-    
+
     @IBOutlet weak var webViewContainer: UIView!
     @IBOutlet weak var offlineView: UIView!
     @IBOutlet weak var offlineIcon: UIImageView!
     @IBOutlet weak var offlineButton: UIButton!
     @IBOutlet weak var activityIndicatorView: UIView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
-    
-    
+
+
     // MARK: Globals
     var webView: WKWebView!
     var tempView: WKWebView!
-    var progressBar : UIProgressView!
+    var progressBar: UIProgressView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,17 +35,30 @@ class ViewController: UIViewController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
- 
+
+
     // reload page from offline screen
     @IBAction func onOfflineButtonClick(_ sender: Any) {
         offlineView.isHidden = true
         webViewContainer.isHidden = false
         loadAppUrl()
     }
-    
+
     // Observers for updating UI
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+
+        print(webView.url?.relativePath as Any)
+
+        print("Optional(\"http://boss.aaden.online/login\")")
+
+        if(webView.url?.relativeString ==  "http://boss.aaden.online/login" ) {
+            print("show button-----------------------")
+
+        } else {
+            print("hide button")
+            
+        }
+
         if (keyPath == #keyPath(WKWebView.isLoading)) {
             // show activity indicator
 
@@ -58,17 +71,12 @@ class ViewController: UIViewController {
                 activityIndicator.startAnimating()
             }
             */
-            
-            print("loading...")
-            
         }
         if (keyPath == #keyPath(WKWebView.estimatedProgress)) {
             progressBar.progress = Float(webView.estimatedProgress)
         }
-        
-        print()
     }
-    
+
     // Initialize WKWebView
     func setupWebView() {
         // set up webview
@@ -77,15 +85,15 @@ class ViewController: UIViewController {
         webView.uiDelegate = self
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         webViewContainer.addSubview(webView)
-        
+
         // settings
         webView.allowsBackForwardNavigationGestures = true
         webView.configuration.preferences.javaScriptEnabled = true
         if #available(iOS 10.0, *) {
             webView.configuration.ignoresViewportScaleLimits = false
         }
-        webView.customUserAgent="Mozilla/5.0 (Linux; Android 4.1.1; Galaxy Nexus Build/JRO03C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19";
-        
+        webView.customUserAgent = "Mozilla/5.0 (Linux; Android 4.1.1; Galaxy Nexus Build/JRO03C) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.166 Mobile Safari/535.19";
+
         // bounces
         webView.scrollView.bounces = enableBounceWhenScrolling
 
@@ -93,7 +101,7 @@ class ViewController: UIViewController {
         webView.addObserver(self, forKeyPath: #keyPath(WKWebView.isLoading), options: NSKeyValueObservingOptions.new, context: nil)
         webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: NSKeyValueObservingOptions.new, context: nil)
     }
-    
+
     // Initialize UI elements
     // call after WebView has been initialized
     func setupUI() {
@@ -105,16 +113,16 @@ class ViewController: UIViewController {
         progressBar.progress = 0.0
         progressBar.tintColor = progressBarColor
         webView.addSubview(progressBar)
-        
+
         // activity indicator
         activityIndicator.color = activityIndicatorColor
         activityIndicator.startAnimating()
-        
+
         // offline container
         offlineIcon.tintColor = offlineIconColor
         offlineButton.tintColor = buttonColor
         offlineView.isHidden = true
-        
+
         // setup navigation bar
         if (forceLargeTitle) {
             if #available(iOS 11.0, *) {
@@ -124,11 +132,11 @@ class ViewController: UIViewController {
         if (useLightStatusBarStyle) {
             self.navigationController?.navigationBar.barStyle = UIBarStyle.black
         }
-        self.navigationController?.navigationBar.isHidden=true
-        
-     
+        self.navigationController?.navigationBar.isHidden = true
+
+
         /// create callback for device rotation
-        let deviceRotationCallback : (Notification) -> Void = { _ in
+        let deviceRotationCallback: (Notification) -> Void = { _ in
             // this fires BEFORE the UI is updated, so we check for the opposite orientation,
             // if it's not the initial setup
         }
@@ -147,21 +155,21 @@ class ViewController: UIViewController {
         let urlRequest = URLRequest(url: webAppUrl!)
         webView.load(urlRequest)
     }
-    
+
     // Initialize App and start loading
     func setupApp() {
         setupWebView()
         setupUI()
         loadAppUrl()
     }
-    
+
     // Cleanup
     deinit {
         webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.isLoading))
         webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress))
         NotificationCenter.default.removeObserver(self, name: .UIDeviceOrientationDidChange, object: nil)
     }
-    
+
     // Helper method to determine wide screen width
     func isWideScreen() -> Bool {
         // this considers device orientation too.
@@ -171,13 +179,21 @@ class ViewController: UIViewController {
             return false
         }
     }
-    
-    
+
+
     // change Icon Button
     @IBOutlet weak var toggleIconBtn: UIButton!
-    
+
     @IBAction func triggerIcon(_ sender: Any) {
-        if(toggleIconBtn.backgroundColor != UIColor.green){
+        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
+        print("========================================")
+
+        bottomAlert()
+    }
+
+    func toggleIconContent() {
+
+        if (toggleIconBtn.backgroundColor != UIColor.green) {
             toggleIconBtn.backgroundColor = UIColor.green
         } else {
             toggleIconBtn.backgroundColor = UIColor.blue
@@ -186,35 +202,78 @@ class ViewController: UIViewController {
         print(UIApplication.shared.alternateIconName ?? "alternateIconName")
 
         print("change icon")
-        
+
         let str = UIApplication.shared.alternateIconName
         print(str ?? "nil")
-        
-        
+
         let name = "Icon_T4"
-        
-        
+
         if (str != name) {
             changeAppIconWithName(iconName: name)
         } else {
             changeAppIconWithName(iconName: nil)
         }
-        
+
         print("change icon complete")
-        
-        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
-        print("========================================")
+
     }
-    
+
     func changeAppIconWithName(iconName: String?) {
-        if UIApplication.shared.supportsAlternateIcons{
-            print("change to " + (iconName ?? "nil") )
+        if UIApplication.shared.supportsAlternateIcons {
+            print("change to " + (iconName ?? "nil"))
             UIApplication.shared.setAlternateIconName(iconName) { error in
                 print(error ?? "no error")
             }
         }
     }
-    
+
+    func bottomAlert() {
+
+        let alertController = UIAlertController(title: NSLocalizedString("切换图标", comment: ""),
+                message: nil, preferredStyle: .actionSheet)
+        let cancelAction = UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel, handler: nil)
+
+        let originalIcon = UIAlertAction(title: NSLocalizedString("原始图标", comment: ""), style: .default, handler: { [self]
+            action in
+            print("切换为原始图标")
+            changeAppIconWithName(iconName: nil)
+        })
+        let t4Icon = UIAlertAction(title: NSLocalizedString("T4", comment: ""), style: .default, handler: { [self]
+            action in
+            print("切换为T4图标")
+            changeAppIconWithName(iconName: "Icon_T4")
+        })
+        let comebuyIcon = UIAlertAction(title: NSLocalizedString("ComeBuy", comment: ""), style: .default, handler: { [self]
+            action in
+            print("切换为ComeBuy图标")
+            changeAppIconWithName(iconName: "Icon_CB")
+        })
+        let teeamoIcon = UIAlertAction(title: NSLocalizedString("Teeamo", comment: ""), style: .default, handler: { [self]
+            action in
+            print("切换为茶伴图标")
+            changeAppIconWithName(iconName: "Icon_TM")
+        })
+        alertController.addAction(cancelAction)
+        alertController.addAction(t4Icon)
+        alertController.addAction(comebuyIcon)
+        alertController.addAction(teeamoIcon)
+        alertController.addAction(originalIcon)
+        self.present(alertController, animated: true, completion: nil)
+    }
+
+    func alert() {
+        let alertController = UIAlertController(title: "系统提示",
+                message: "您确定要离开hangge.com吗？", preferredStyle: .alert)
+        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
+        let okAction = UIAlertAction(title: "好的", style: .default, handler: {
+            action in
+            print("点击了确定")
+        })
+        alertController.addAction(cancelAction)
+        alertController.addAction(okAction)
+        self.present(alertController, animated: true, completion: nil)
+    }
+
 }
 
 // WebView Event Listeners
@@ -230,8 +289,9 @@ extension ViewController: WKNavigationDelegate {
         // hide activity indicator
         activityIndicatorView.isHidden = true
         activityIndicator.stopAnimating()
-        
+
     }
+
     // didFailProvisionalNavigation
     // == we are offline / page not available
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
@@ -250,12 +310,13 @@ extension ViewController: WKUIDelegate {
         }
         return nil
     }
+
     // restrict navigation to target host, open external links in 3rd party apps
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if let requestUrl = navigationAction.request.url {
-            if let scheme=requestUrl.scheme{
+            if let scheme = requestUrl.scheme {
                 print(scheme)
-                if(scheme != "http"&&scheme != "https"){
+                if (scheme != "http" && scheme != "https") {
                     print("I should Open")
                     decisionHandler(.cancel)
                     if (UIApplication.shared.canOpenURL(requestUrl)) {
@@ -266,14 +327,14 @@ extension ViewController: WKUIDelegate {
                             UIApplication.shared.openURL(requestUrl)
                         }
                     }
-                }else{
+                } else {
                     print("I should Allow")
                     decisionHandler(.allow)
                 }
-            }else{
+            } else {
                 decisionHandler(.allow)
             }
-        }else{
+        } else {
             decisionHandler(.allow)
         }
     }
