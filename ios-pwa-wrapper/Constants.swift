@@ -10,7 +10,7 @@ import UIKit
 
 // Basic App-/WebView-configuration
 let appTitle = "iOS PWA Wrapper"
-let webAppUrl = URL(string: "http://boss.aaden.online")
+let webAppUrl = URL(string: "http://v2.aaden.online")
 let allowedOrigin = "boss.aaden.online"
 let menuButtonTitle = NSLocalizedString("menu", comment: "")
 let menuButtonJavascript = """
