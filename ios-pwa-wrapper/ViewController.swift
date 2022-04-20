@@ -47,18 +47,6 @@ class ViewController: UIViewController {
     // Observers for updating UI
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
 
-        print(webView.url?.relativePath as Any)
-
-        print("Optional(\"http://boss.aaden.online/login\")")
-
-        if(webView.url?.relativeString ==  "http://boss.aaden.online/login" ) {
-            print("show button-----------------------")
-
-        } else {
-            print("hide button")
-            
-        }
-
         if (keyPath == #keyPath(WKWebView.isLoading)) {
             // show activity indicator
 
@@ -191,33 +179,6 @@ class ViewController: UIViewController {
         bottomAlert()
     }
 
-    func toggleIconContent() {
-
-        if (toggleIconBtn.backgroundColor != UIColor.green) {
-            toggleIconBtn.backgroundColor = UIColor.green
-        } else {
-            toggleIconBtn.backgroundColor = UIColor.blue
-        }
-        print("---------------------------------------")
-        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
-
-        print("change icon")
-
-        let str = UIApplication.shared.alternateIconName
-        print(str ?? "nil")
-
-        let name = "Icon_T4"
-
-        if (str != name) {
-            changeAppIconWithName(iconName: name)
-        } else {
-            changeAppIconWithName(iconName: nil)
-        }
-
-        print("change icon complete")
-
-    }
-
     func changeAppIconWithName(iconName: String?) {
         if UIApplication.shared.supportsAlternateIcons {
             print("change to " + (iconName ?? "nil"))
@@ -299,20 +260,24 @@ extension ViewController: WKNavigationDelegate {
 //        offlineView.isHidden = false
 //        webViewContainer.isHidden = true
     }
-}
 
-// WebView additional handlers
-extension ViewController: WKUIDelegate {
-    // handle links opening in new tabs
-    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-        if (navigationAction.targetFrame == nil) {
-            webView.load(navigationAction.request)
-        }
-        return nil
-    }
 
     // restrict navigation to target host, open external links in 3rd party apps
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        if let requestUrl = navigationAction.request.url {
+
+            let param = requestUrl.path
+
+            if ( param == "/login" ) {
+                print("--------------------------------")
+                toggleIconBtn.isHidden = false
+            } else {
+                print("+++++++++++++++++++++++++++++++++")
+                toggleIconBtn.isHidden = true
+            }
+            print(requestUrl.relativeString as Any)
+        }
+
         if let requestUrl = navigationAction.request.url {
             if let scheme = requestUrl.scheme {
                 print(scheme)
@@ -338,4 +303,18 @@ extension ViewController: WKUIDelegate {
             decisionHandler(.allow)
         }
     }
+
+}
+
+// WebView additional handlers
+extension ViewController: WKUIDelegate {
+    // handle links opening in new tabs
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        if (navigationAction.targetFrame == nil) {
+            webView.load(navigationAction.request)
+        }
+        return nil
+    }
+
+
 }
