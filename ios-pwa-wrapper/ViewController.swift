@@ -28,6 +28,12 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         self.title = appTitle
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.setIcon()
+
+            }
+        
         setupApp()
     }
 
@@ -167,29 +173,61 @@ class ViewController: UIViewController {
             return false
         }
     }
+    
+    func setIcon() {
+        let userDefault = UserDefaults.standard
+        let icon = userDefault.object(forKey: "chooseIcon")
+        
+        let icon_name = String(describing: icon)
+                
+        switch(icon_name) {
+            case "Optional(AD)" :
+                changeAppIconWithName(iconName: nil)
+                break
+            case "Optional(T4)" :
+                changeAppIconWithName(iconName: "Icon_T4")
+                break
+            case "Optional(CB)" :
+                changeAppIconWithName(iconName: "Icon_CB")
+                break
+            case "Optional(TM)" :
+                changeAppIconWithName(iconName: "Icon_TM")
+                break
+            default:
+                print(icon_name)
+                changeAppIconWithName(iconName: nil)
+        }
+        
+    }
+    
+    func changeAppIconWithName(iconName: String?) {
+        if UIApplication.shared.supportsAlternateIcons {
+            print("change to " + (iconName ?? "nil"))
+            let currentIconName = UIApplication.shared.alternateIconName ?? nil
+            
+            //当现icon不是选中icon时切换为选中icon
+            if(iconName != currentIconName) {
+                UIApplication.shared.setAlternateIconName(iconName) { error in
+                    print(error ?? "no error")
+                }
+            }
+        }
+    }
 
 
     // change Icon Button
     @IBOutlet weak var toggleIconBtn: UIButton!
 
     @IBAction func triggerIcon(_ sender: Any) {
-        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
-        print("========================================")
+//        print(UIApplication.shared.alternateIconName ?? "alternateIconName")
+//        print("========================================")
 
-        bottomAlert()
+//        bottomAlert()
     }
 
-    func changeAppIconWithName(iconName: String?) {
-        if UIApplication.shared.supportsAlternateIcons {
-            print("change to " + (iconName ?? "nil"))
-            UIApplication.shared.setAlternateIconName(iconName) { error in
-                print(error ?? "no error")
-            }
-        }
-    }
 
+    //切换图标按钮
     func bottomAlert() {
-
         let alertController = UIAlertController(title: NSLocalizedString("切换图标", comment: ""),
                 message: nil, preferredStyle: .actionSheet)
         let cancelAction = UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel, handler: nil)
@@ -222,19 +260,6 @@ class ViewController: UIViewController {
         self.present(alertController, animated: true, completion: nil)
     }
 
-    func alert() {
-        let alertController = UIAlertController(title: "系统提示",
-                message: "您确定要离开hangge.com吗？", preferredStyle: .alert)
-        let cancelAction = UIAlertAction(title: "取消", style: .cancel, handler: nil)
-        let okAction = UIAlertAction(title: "好的", style: .default, handler: {
-            action in
-            print("点击了确定")
-        })
-        alertController.addAction(cancelAction)
-        alertController.addAction(okAction)
-        self.present(alertController, animated: true, completion: nil)
-    }
-
 }
 
 // WebView Event Listeners
@@ -264,19 +289,6 @@ extension ViewController: WKNavigationDelegate {
 
     // restrict navigation to target host, open external links in 3rd party apps
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        if let requestUrl = navigationAction.request.url {
-
-            let param = requestUrl.path
-
-            if ( param == "/login" ) {
-                print("--------------------------------")
-                toggleIconBtn.isHidden = false
-            } else {
-                print("+++++++++++++++++++++++++++++++++")
-                toggleIconBtn.isHidden = true
-            }
-            print(requestUrl.relativeString as Any)
-        }
 
         if let requestUrl = navigationAction.request.url {
             if let scheme = requestUrl.scheme {
@@ -317,4 +329,23 @@ extension ViewController: WKUIDelegate {
     }
 
 
+//    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+//
+//        if let requestUrl = navigationResponse.response.url {
+//
+//            let param = requestUrl.relativeString
+//
+//            if ( param == "http://v2.aaden.online/login" ) {
+//                    print("--------------------------------")
+//                    toggleIconBtn.isHidden = false
+//                } else {
+//                    print("+++++++++++++++++++++++++++++++++")
+//                    toggleIconBtn.isHidden = true
+//                }
+//            print(requestUrl.relativeString as Any)
+//
+//        }
+//
+//        decisionHandler(.allow)
+//    }
 }
