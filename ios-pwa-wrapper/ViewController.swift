@@ -30,9 +30,13 @@ class ViewController: UIViewController {
         self.title = appTitle
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                self.setIcon()
+            //检查设置中的图标是否与app图标一致
+            self.setIcon()
+            
+            //使用UserDefaults来判断程序是否第一次启动
+            self.firstLaunchCheckIcon()
 
-            }
+        }
         
         setupApp()
     }
@@ -174,6 +178,18 @@ class ViewController: UIViewController {
         }
     }
     
+    func firstLaunchCheckIcon() {
+        let userDefault = UserDefaults.standard
+        let isNotFitst = userDefault.bool(forKey: "firstLaunch")
+        NSLog(String(isNotFitst))
+        if(!isNotFitst){
+            userDefault.set(true, forKey: "firstLaunch")
+            NSLog("is first launching")
+            let chooseIcon = bottomAlert()
+            NSLog(chooseIcon)
+        }
+    }
+    
     func setIcon() {
         let userDefault = UserDefaults.standard
         let icon = userDefault.object(forKey: "chooseIcon")
@@ -195,7 +211,7 @@ class ViewController: UIViewController {
                 break
             default:
                 print(icon_name)
-                changeAppIconWithName(iconName: nil)
+//                changeAppIconWithName(iconName: nil)
         }
         
     }
@@ -210,6 +226,17 @@ class ViewController: UIViewController {
                 UIApplication.shared.setAlternateIconName(iconName) { error in
                     print(error ?? "no error")
                 }
+                let userDefault = UserDefaults.standard
+                var icon = userDefault.object(forKey: "chooseIcon")
+                
+                var icon_name = String(describing: icon)
+                NSLog(icon_name)
+                userDefault.set(iconName,forKey: "chooseIcon")
+                
+                icon = userDefault.object(forKey: "chooseIcon")
+                
+                icon_name = String(describing: icon)
+                NSLog(icon_name)
             }
         }
     }
@@ -227,7 +254,8 @@ class ViewController: UIViewController {
 
 
     //切换图标按钮
-    func bottomAlert() {
+    func bottomAlert() -> String {
+        var res = String()
         let alertController = UIAlertController(title: NSLocalizedString("切换图标", comment: ""),
                 message: nil, preferredStyle: .actionSheet)
         let cancelAction = UIAlertAction(title: NSLocalizedString("取消", comment: ""), style: .cancel, handler: nil)
@@ -236,21 +264,25 @@ class ViewController: UIViewController {
             action in
             print("切换为原始图标")
             changeAppIconWithName(iconName: nil)
+            res = "AD"
         })
         let t4Icon = UIAlertAction(title: NSLocalizedString("T4", comment: ""), style: .default, handler: { [self]
             action in
             print("切换为T4图标")
             changeAppIconWithName(iconName: "Icon_T4")
+            res = "T4"
         })
         let comebuyIcon = UIAlertAction(title: NSLocalizedString("ComeBuy", comment: ""), style: .default, handler: { [self]
             action in
             print("切换为ComeBuy图标")
             changeAppIconWithName(iconName: "Icon_CB")
+            res = "CB"
         })
         let teeamoIcon = UIAlertAction(title: NSLocalizedString("Teeamo", comment: ""), style: .default, handler: { [self]
             action in
             print("切换为茶伴图标")
             changeAppIconWithName(iconName: "Icon_TM")
+            res = "TM"
         })
         alertController.addAction(cancelAction)
         alertController.addAction(t4Icon)
@@ -258,6 +290,7 @@ class ViewController: UIViewController {
         alertController.addAction(teeamoIcon)
         alertController.addAction(originalIcon)
         self.present(alertController, animated: true, completion: nil)
+        return res
     }
 
 }
